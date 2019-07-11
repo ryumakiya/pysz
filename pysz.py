@@ -52,23 +52,36 @@ class tsz_cl:
     def get_tsz_cl(self,ell_arr,params):
         obh2 = params['obh2']
         och2 = params['och2']
-        theta = params['theta']
         As = params['As']
         ns = params['ns']
         mnu = params['mnu']
         mass_bias = params['mass_bias']
         flag_nu = params['flag_nu']
+        
+        if 'theta' in params.keys():
+            theta = params['theta']
+            pars = {'output':'mPk','100*theta_s':theta,
+                    'omega_b':obh2,'omega_cdm':och2,
+                    'A_s':As,'n_s':ns,\
+                    'N_ur':0.00641,'N_ncdm':1,'m_ncdm':mnu/3.,\
+                    'T_ncdm':0.71611,\
+                    'P_k_max_h/Mpc': self.kmax,'z_max_pk':self.zmax,\
+                    'deg_ncdm':3.}
+            self.cosmo.set(pars)
+            self.cosmo.compute()
+            h0 = self.cosmo.h()
+        elif 'h0' in params.keys():
+            h0 = params['h0']
+            pars = {'output':'mPk','h':h0,
+                    'omega_b':obh2,'omega_cdm':och2,
+                    'A_s':As,'n_s':ns,\
+                    'N_ur':0.00641,'N_ncdm':1,'m_ncdm':mnu/3.,\
+                    'T_ncdm':0.71611,\
+                    'P_k_max_h/Mpc': self.kmax,'z_max_pk':self.zmax,\
+                    'deg_ncdm':3.}
+            self.cosmo.set(pars)
+            self.cosmo.compute()
 
-        pars = {'output':'mPk','100*theta_s':theta,
-                'omega_b':obh2,'omega_cdm':och2,
-                'A_s':As,'n_s':ns,\
-                'N_ur':0.00641,'N_ncdm':1,'m_ncdm':mnu/3.,\
-                'T_ncdm':0.71611,\
-                'P_k_max_h/Mpc': self.kmax,'z_max_pk':self.zmax,\
-                'deg_ncdm':3.}
-        self.cosmo.set(pars)
-        self.cosmo.compute()
-        h0 = self.cosmo.h()
 
         kh_arr = np.logspace(np.log10(self.kmin),np.log10(self.kmax),self.nk_pk)
         kh = np.zeros((self.nz_pk,self.nk_pk))
