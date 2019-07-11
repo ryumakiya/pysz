@@ -1,0 +1,207 @@
+#define MAXSIZE 4096
+SUBROUTINE calc_cl(h0_in, obh2_in, och2_in, mnu_in, mass_bias_in,&
+                   pk_nk_in, pk_nz_in, k_arr, pk_arr,&
+                   nl_in, ell_arr, cl_yy, tll, flag_nu_in)
+  !$ USE omp_lib
+  use cosmo
+  use global_var
+  use linearpk_z
+  use sigma_z
+  use angular_distance
+  use mod_ptilde
+  IMPLICIT none
+  integer, intent(IN) :: pk_nk_in, pk_nz_in, nl_in
+  double precision, intent(IN) :: h0_in, obh2_in, och2_in, mnu_in
+  double precision, intent(IN) :: mass_bias_in
+  double precision, dimension(0:pk_nk_in-1,0:pk_nz_in-1), intent(IN) :: k_arr, pk_arr
+  double precision, dimension(0:nl_in-1), intent(INOUT) :: ell_arr, cl_yy
+  double precision, dimension(0:nl_in-1,0:nl_in-1), intent(INOUT) :: tll
+  integer, intent(IN) :: flag_nu_in
+
+  nl = nl_in
+
+  ! flag for neutrino prescription
+  flag_nu = flag_nu_in
+
+  ! read in linear P(k,z)
+  pk_nk = pk_nk_in
+  pk_nz = pk_nz_in
+  call open_linearpk(pk_nk,pk_nz,k_arr,pk_arr)
+
+  ! input parameters
+  !! cosmological parameters
+  h0 = h0_in
+  obh2 = obh2_in
+  och2 = och2_in
+  om0_cb = (obh2+och2)/h0**2
+  mnu = mnu_in
+  onu = mnu/93.14/h0**2
+  ode0 = 1.d0-om0_cb-onu
+  w = -1d0
+
+  !! tSZ parameters
+  mass_bias = mass_bias_in
+  ! fixed parameters
+  alp_p = 0.12d0
+  beta = 0.d0
+
+  ! preface
+  !! ptilde
+  call setup_ptilde
+
+  !! fit sigma^2(R) to Chebyshev polynomials
+  call compute_sigma2
+
+  !! compute and tabulate da(z) 
+  call setup_da
+
+  ! calculate Cls
+  !$OMP barrier
+  call calc_cl_yy(ell_arr,cl_yy)
+  !$OMP barrier
+
+  call close_linearpk
+  call close_sigma
+  call close_ptilde
+!===============================================================
+CONTAINS
+!===============================================================
+  SUBROUTINE calc_cl_yy(ell_arr,cl_yy)
+    !$ USE omp_lib
+    USE global_var
+    IMPLICIT none
+    double precision, intent(INOUT) :: cl_yy(0:nl-1)
+    double precision, intent(IN) :: ell_arr(:)
+    double precision, allocatable :: cls_th(:,:)
+    double precision :: ell
+    integer :: i, j, k, nth, ith
+    double precision :: lnx, lnx1, lnx2, dlnx
+    double precision :: lnM, lnM1, lnM2, dlnM
+    double precision :: fac1
+    double precision :: intg_1h(nl), intg_2h(nl)
+
+
+    cl_yy(:) = 0.d0
+
+    lnx1=dlog(1d0+z1); lnx2 = dlog(1d0+z2)
+    dlnx = (lnx2-lnx1)/nz
+  
+    lnM1=dlog(Mmin); lnM2=dlog(Mmax)
+    
+    ! 1-halo term
+    !$OMP parallel private(j,lnx,fac1,lnM,intg_1h,intg_2h,ith), shared(cls_th,nth,dlnx)
+    nth = omp_get_num_threads()
+    ith = omp_get_thread_num()
+    !$OMP single
+    allocate(cls_th(nl,nth))
+    cls_th(:,:) = 0.d0
+    !$OMP end single
+    !$OMP do
+    do j = 1, nz+1
+      lnx = lnx1+dlnx*(j-1)
+      fac1 = 1.d0
+      if (j == 1 .or. j == nz+1) fac1 = 0.5d0
+      ! mass integration
+      call qgaus2_n20_arr(integrand_1h,lnM1,lnM2,intg_1h,lnx,ell_arr)
+      cls_th(:,ith+1) = cls_th(:,ith+1)+intg_1h*dlnx*fac1
+    end do 
+    !$OMP end do
+    !$OMP barrier
+
+    !$OMP barrier
+    ! 2-halo term
+    dlnx = (lnx2-lnx1)/nz_2h
+    !$OMP do
+    do j = 1, nz_2h+1
+      lnx = lnx1+dlnx*(j-1)
+!      fac1 = 1.d0
+!      if (j == 1 .or. j == nz_2h+1) fac1 = 0.5d0
+!      call calc_integrand_2h(lnx,ell_obs,intg_2h)
+!      ngz_z = ngz(dexp(lnx)-1d0)
+!      intg_2h(1:il_max) = intg_2h(1:il_max)/ngz_z**2d0
+!      intg_2h(1+il_max*2:il_max*3) = intg_2h(1+il_max*2:il_max*3)/ngz_z
+!      cls_th(1:il_max*3,ith+1) = cls_th(1:il_max*3,ith+1)+intg_2h*dlnx*fac1
+    end do
+    !$OMP end do
+    !$OMP barrier
+    !$OMP end parallel
+
+    do i = 1, nl
+      cl_yy(i-1) = sum(cls_th(i,1:nth))
+    end do
+
+    !$OMP single
+    deallocate(cls_th)
+    !$OMP end single
+
+  END SUBROUTINE calc_cl_yy
+!===============================================================
+  FUNCTION integrand_1h(lnM, lnx, ell_arr)
+    USE global_var
+    USE cosmo
+    USE mf_module
+    USE angular_distance
+    IMPLICIT none
+    double precision :: integrand_1h(nl)
+    double precision, intent(IN) :: lnx, lnM, ell_arr(nl)
+    double precision :: uy, ell
+    double precision :: z, dvdz, fac, da
+    double precision :: calc_uy
+    integer :: i
+    external calc_uy, da
+
+    integrand_1h(:) = 0d0
+
+    do i = 1, nl
+      ell = ell_arr(i)
+      uy = calc_uy(lnx,lnM,ell)
+      integrand_1h(i) = uy*uy
+    end do
+
+    z = dexp(lnx)-1d0
+    dvdz = (1d0+z)**2d0*da(z)**2d0*2998d0/Ez(z) ! h^-3 Mpc^3
+    fac = dvdz*(1+z)*dndlnMh_500c_T08(lnM,z)
+
+    integrand_1h = integrand_1h*fac
+    
+    return  
+  END FUNCTION integrand_1h
+!===============================================================
+  SUBROUTINE calc_integrand_2h(lnx, ell_arr, intg_2h)
+    USE global_var
+    USE cosmo
+    USE mf_module
+    USE angular_distance
+    USE linearpk_z
+    IMPLICIT none
+    double precision, intent(IN) :: lnx, ell_arr(nl)
+    double precision, intent(INOUT) :: intg_2h(nl)
+    double precision :: ell
+    double precision :: z, dvdz, fac, da, chi
+    double precision :: by, lnM1, lnM2, lnM, dlnM
+    double precision :: integrand_by
+    double precision :: linear_pk
+    integer :: il, iz
+    external linear_pk, integrand_by
+
+    intg_2h = 0d0
+    z = dexp(lnx)-1d0
+
+    do il = 1, nl
+      ell = ell_arr(il)
+
+      ! SZ term
+      lnM1 = dlog(Mmin); lnM2 = dlog(Mmax)
+      call qgaus2(integrand_by,lnM1,lnM2,by,z,ell) ! Gaussian quadrature, SZ bias
+  
+      dvdz=(1d0+z)**2d0*da(z)**2d0*2998d0/Ez(z)
+      chi = da(z)*(1.d0+z)
+      fac = linear_pk(ell/chi,iz)*dvdz*(1d0+z)
+  
+      intg_2h(il) = by*by*fac
+    end do
+
+    return  
+  END SUBROUTINE calc_integrand_2h
+!!!$================================================================
+END SUBROUTINE calc_cl
