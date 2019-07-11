@@ -37,18 +37,26 @@ MODULE sigma_z
   REAL, allocatable    :: c(:,:),cder(:,:)
   REAL    :: lnR1=-5.684 ! 0.0034Mpc/h, 1.8e4  solar mass
   REAL    :: lnR2=4.     ! 54.9Mpc/h, 7.5e16 solar mass
-  INTEGER :: iz_sigma
 contains
   SUBROUTINE compute_sigma2
+    !$ USE omp_lib
     USE global_var
     REAL :: lnsigma2
     EXTERNAL lnsigma2
     allocate(c(ndim,pk_nz))
     allocate(cder(ndim,pk_nz))
+
+    !$OMP parallel private(iz_sigma), shared(c,cder)
+    !$OMP do
     do iz_sigma = 1, pk_nz
-      CALL chebft(lnR1,lnR2,c(:,iz_sigma),ndim,lnsigma2)
+      print *, iz_sigma, omp_get_thread_num()
+      CALL chebft1(lnR1,lnR2,c(:,iz_sigma),ndim,lnsigma2,dble(iz_sigma))
       CALL chder(lnR1,lnR2,c(:,iz_sigma),cder(:,iz_sigma),ndim)
     end do
+    !$OMP end do
+    !$OMP barrier
+    !$OMP end parallel
+
     return
   END SUBROUTINE compute_sigma2
   SUBROUTINE close_sigma
@@ -57,29 +65,29 @@ contains
   END SUBROUTINE close_sigma
 END MODULE sigma_z
 !--------------------------------------------
-REAL FUNCTION lnsigma2(lnR)
+REAL FUNCTION lnsigma2(lnR,iz_sigma)
   USE sigma_z
   IMPLICIT none
-  REAL :: lnR
+  REAL :: lnR, iz_sigma
   DOUBLE PRECISION :: sigma2,r
   DOUBLE PRECISION :: ds2dk
   EXTERNAL ds2dk
   r = exp(lnR)
-  CALL qromb(ds2dk,dlog(1d-4),dlog(2d1/r),sigma2,r)
+  CALL qromb2(ds2dk,dlog(1d-4),dlog(2d1/r),sigma2,r,iz_sigma)
   ! CALL qromb(ds2dk,dlog(1.d-3),dlog(5d0),sigma2,r)
   lnsigma2 = alog(REAL(sigma2))
   return
 END FUNCTION lnsigma2
 !--------------------------------------------
-DOUBLE PRECISION FUNCTION ds2dk(lnk,r)
+DOUBLE PRECISION FUNCTION ds2dk(lnk,r,iz_sigma)
   USE sigma_z
   IMPLICIT none
-  DOUBLE PRECISION :: lnk,k,r,x
+  DOUBLE PRECISION :: lnk,k,r,x,iz_sigma
   DOUBLE PRECISION :: linear_pk,win
   DOUBLE PRECISION :: pi= 3.14159265d0
   k = dexp(lnk)
   x = k*r
   win= (3d0/x)*(sin(x)/x**2d0-cos(x)/x)
-  ds2dk = k**3d0*(linear_pk(k,iz_sigma)*win**2d0)/(2d0*pi**2d0)
+  ds2dk = k**3d0*(linear_pk(k,int(iz_sigma))*win**2d0)/(2d0*pi**2d0)
   return
 END FUNCTION ds2dk

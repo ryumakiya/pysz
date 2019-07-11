@@ -10,7 +10,8 @@ import time
 MAXSIZE = 4096
 
 # checking platform
-LIBDIR = (os.path.expanduser('~'))+'/Dropbox/py_mymodules/pysz'
+LIBDIR = os.path.dirname(__file__)
+# LIBDIR = (os.path.expanduser('~'))+'/Dropbox/py_mymodules/pysz'
 sys.path.append(LIBDIR)
 
 
@@ -39,11 +40,14 @@ class tsz_cl:
         self.fort_lib_cl.calc_cl_.restype = c_void_p
 
         # Calcualtion setup
-        self.kmin = 1e-4
-        self.kmax = 10.
-        self.zmax = 4.
+        self.kmin = 1e-3
+        self.kmax = 5.
+        self.zmax = 4. # should be consistent with fortran code
         self.nk_pk = 200
         self.nz_pk = 101
+
+        # Class
+        self.cosmo = Class()
 
     def get_tsz_cl(self,ell_arr,params):
         obh2 = params['obh2']
@@ -62,10 +66,9 @@ class tsz_cl:
                 'T_ncdm':0.71611,\
                 'P_k_max_h/Mpc': self.kmax,'z_max_pk':self.zmax,\
                 'deg_ncdm':3.}
-        cosmo = Class()
-        cosmo.set(pars)
-        cosmo.compute()
-        h0 = cosmo.h()
+        self.cosmo.set(pars)
+        self.cosmo.compute()
+        h0 = self.cosmo.h()
 
         kh_arr = np.logspace(np.log10(self.kmin),np.log10(self.kmax),self.nk_pk)
         kh = np.zeros((self.nz_pk,self.nk_pk))
@@ -74,9 +77,9 @@ class tsz_cl:
         for i in range(self.nz_pk):
             kh[i,:] = kh_arr
             if flag_nu == 0:
-                pk[i,:] = np.array([cosmo.pk(k*h0,pk_zarr[i])*h0**3 for k in kh_arr])
+                pk[i,:] = np.array([self.cosmo.pk(k*h0,pk_zarr[i])*h0**3 for k in kh_arr])
             elif flag_nu == 1:
-                pk[i,:] = np.array([cosmo.pk_cb(k*h0,pk_zarr[i])*h0**3 for k in kh_arr])
+                pk[i,:] = np.array([self.cosmo.pk_cb(k*h0,pk_zarr[i])*h0**3 for k in kh_arr])
 
         ####  set variables for fortran codes ###
         nk = byref(c_int64(self.nk_pk)) # indx_z, indx_k
@@ -92,11 +95,10 @@ class tsz_cl:
         
         # outputs
         nl = len(ell_arr)
-        cl_yy = np.zeros(nl)
+        cl_yy = np.zeros((2,nl))
         tll = np.zeros((nl,nl))
         nl = c_int64(nl)
-    
-        t1 = time.time()
+   
         self.fort_lib_cl.calc_cl_(
                 h0_in, obh2_in, och2_in, mnu_in,\
                 mass_bias_in, nk, nz,\
@@ -105,5 +107,4 @@ class tsz_cl:
                 cl_yy,tll,\
                 flag_nu_in
                 )
-        print time.time()-t1
         return cl_yy
