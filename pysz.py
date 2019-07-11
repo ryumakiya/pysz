@@ -10,7 +10,8 @@ import time
 MAXSIZE = 4096
 
 # checking platform
-LIBDIR = (os.path.expanduser('~'))+'/Dropbox/py_mymodules/pysz'
+LIBDIR = os.path.dirname(__file__)
+# LIBDIR = (os.path.expanduser('~'))+'/pymy/pysz'
 sys.path.append(LIBDIR)
 
 
