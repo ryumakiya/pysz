@@ -49,7 +49,6 @@ contains
     !$OMP parallel private(iz_sigma), shared(c,cder)
     !$OMP do
     do iz_sigma = 1, pk_nz
-      print *, iz_sigma, omp_get_thread_num()
       CALL chebft1(lnR1,lnR2,c(:,iz_sigma),ndim,lnsigma2,dble(iz_sigma))
       CALL chder(lnR1,lnR2,c(:,iz_sigma),cder(:,iz_sigma),ndim)
     end do
