@@ -1,7 +1,7 @@
 #define MAXSIZE 4096
 SUBROUTINE calc_cl(h0_in, obh2_in, och2_in, mnu_in, mass_bias_in,&
                    pk_nk_in, pk_nz_in, k_arr, pk_arr,&
-                   nl_in, ell_arr, cl_yy, tll, flag_nu_in)
+                   nl_in, ell_arr, cl_yy, tll, flag_nu_in, flag_tll_in)
   !$ USE omp_lib
   use cosmo
   use global_var
@@ -17,12 +17,15 @@ SUBROUTINE calc_cl(h0_in, obh2_in, och2_in, mnu_in, mass_bias_in,&
   double precision, dimension(0:nl_in-1), intent(INOUT) :: ell_arr
   double precision, dimension(0:nl_in-1,0:1), intent(INOUT) :: cl_yy
   double precision, dimension(0:nl_in-1,0:nl_in-1), intent(INOUT) :: tll
-  integer, intent(IN) :: flag_nu_in
+  integer, intent(IN) :: flag_nu_in, flag_tll_in
 
   nl = nl_in
 
   ! flag for neutrino prescription
   flag_nu = flag_nu_in
+
+  ! Calc Tll or not
+  flag_tll = flag_tll_in
 
   ! read in linear P(k,z)
   pk_nk = pk_nk_in
@@ -58,7 +61,7 @@ SUBROUTINE calc_cl(h0_in, obh2_in, och2_in, mnu_in, mass_bias_in,&
 
   ! calculate Cls
   !$OMP barrier
-  call calc_cl_yy(ell_arr,cl_yy)
+  call calc_cl_yy(ell_arr,cl_yy,tll)
   !$OMP barrier
 
   call close_linearpk
@@ -69,21 +72,23 @@ SUBROUTINE calc_cl(h0_in, obh2_in, och2_in, mnu_in, mass_bias_in,&
 !===============================================================
 CONTAINS
 !===============================================================
-  SUBROUTINE calc_cl_yy(ell_arr,cl_yy)
+  SUBROUTINE calc_cl_yy(ell_arr,cl_yy,tll)
     !$ USE omp_lib
     USE global_var
     IMPLICIT none
     double precision, intent(INOUT) :: cl_yy(0:nl-1,0:1)
+    double precision, intent(INOUT) :: tll(0:nl-1,0:nl-1)
     double precision, intent(IN) :: ell_arr(:)
     double precision, allocatable :: cls_th_1h(:,:), cls_th_2h(:,:)
     double precision :: ell
     integer :: i, j, k, nth, ith
     double precision :: lnx, lnx1, lnx2, dlnx
     double precision :: lnM, lnM1, lnM2, dlnM
-    double precision :: fac1
-    double precision :: intg_1h(nl), intg_2h(nl)
+    double precision :: fac1, fac2
+    double precision :: intg_1h(nl), intg_2h(nl), intg_tll(nl,nl)
 
     cl_yy(:,:) = 0.d0
+    intg_tll(:,:) = 0.d0
 
     lnx1=dlog(1d0+z1); lnx2 = dlog(1d0+z2)
     dlnx = (lnx2-lnx1)/nz
@@ -135,6 +140,25 @@ CONTAINS
     deallocate(cls_th_1h,cls_th_2h)
     !$OMP end single
 
+    ! Tll
+    if (flag_tll == 1) then
+      dlnM = (lnM2-lnM1)/nm_tll
+      dlnx = (lnx2-lnx1)/nz_tll
+      do j = 1, nz_tll+1
+        lnx = lnx1+dlnx*(j-1)
+        fac1 = 1.d0
+        if (j == 1 .or. j == nz+1) fac1 = 0.5d0
+        do k =1, nm_tll+1
+          lnM = lnM1+dlnM*(k-1)
+          fac2 = 1.d0
+          if (k == 1 .or. k == nm_tll+1) fac2 = 0.5d0
+          intg_tll = integrand_tll(lnM,lnx,ell_arr)
+          tll(0:nl-1,0:nl-1) = tll(0:nl-1,0:nl-1)+intg_tll*dlnM*dlnx*fac1*fac2
+        end do
+      end do
+      tll = tll/4/pi
+    end if
+
   END SUBROUTINE calc_cl_yy
 !===============================================================
   FUNCTION integrand_1h(lnM, lnx, ell_arr)
@@ -164,7 +188,7 @@ CONTAINS
     fac = dvdz*(1+z)*dndlnMh_500c_T08(lnM,z)
 
     integrand_1h = integrand_1h*fac
-    
+
     return  
   END FUNCTION integrand_1h
 !===============================================================
@@ -215,5 +239,40 @@ CONTAINS
 
     return  
   END SUBROUTINE calc_integrand_2h
-!!!$================================================================
+!===============================================================
+ FUNCTION integrand_tll(lnM, lnx, ell_arr)
+    USE global_var
+    USE cosmo
+    USE mf_module
+    USE angular_distance
+    IMPLICIT none
+    double precision :: integrand_tll(nl,nl), integrand_1h(nl,1)
+    double precision, intent(IN) :: lnx, lnM, ell_arr(nl)
+    double precision :: uy, ell
+    double precision :: z, dvdz, fac, da
+    double precision :: calc_uy
+    integer :: i
+    external calc_uy, da
+    double precision :: fsky_yy = 0.494d0
+
+    integrand_tll(:,:) = 0d0
+
+    do i = 1, nl
+      ell = ell_arr(i)
+      uy = calc_uy(lnx,lnM,ell)
+      integrand_1h(i,1) = uy*uy
+    end do
+
+    integrand_1h = integrand_1h/sqrt(fsky_yy)
+    integrand_tll = matmul(integrand_1h,transpose(integrand_1h))
+
+    z = dexp(lnx)-1d0
+    dvdz = (1d0+z)**2d0*da(z)**2d0*2998d0/Ez(z) ! h^-3 Mpc^3
+    fac = dvdz*(1+z)*dndlnMh_500c_T08(lnM,z)
+
+    integrand_tll = integrand_tll*fac
+
+    return  
+  END FUNCTION integrand_tll
+!===============================================================
 END SUBROUTINE calc_cl

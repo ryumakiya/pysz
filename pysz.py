@@ -35,7 +35,8 @@ class tsz_cl:
                                     np.ctypeslib.ndpointer(dtype=np.double), #ell
                                     np.ctypeslib.ndpointer(dtype=np.double), #yy
                                     np.ctypeslib.ndpointer(dtype=np.double), #tll
-                                    POINTER(c_int64) #flag_nu
+                                    POINTER(c_int64), #flag_nu
+                                    POINTER(c_int64) #flag_tll
                                     ]
         self.fort_lib_cl.calc_cl_.restype = c_void_p
 
@@ -57,6 +58,7 @@ class tsz_cl:
         mnu = params['mnu']
         mass_bias = params['mass_bias']
         flag_nu = params['flag_nu']
+        flag_tll = params['flag_tll']
         
         if 'theta' in params.keys():
             theta = params['theta']
@@ -105,6 +107,7 @@ class tsz_cl:
         mnu_in = byref(c_double(mnu))
         mass_bias_in = byref(c_double(mass_bias))
         flag_nu_in = byref(c_int64(flag_nu))
+        flag_tll_in = byref(c_int64(flag_tll))
         
         # outputs
         nl = len(ell_arr)
@@ -118,6 +121,6 @@ class tsz_cl:
                 np.array(kh),np.array(pk),\
                 nl,np.array(ell_arr),\
                 cl_yy,tll,\
-                flag_nu_in
+                flag_nu_in,flag_tll_in\
                 )
-        return cl_yy
+        return cl_yy, tll
