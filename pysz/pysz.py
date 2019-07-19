@@ -1,10 +1,7 @@
 import numpy as np
 from ctypes import * 
 import sys, os
-import platform
-from scipy import interpolate
 from classy import Class
-import time
 
 # sould match with that defined in FORTRAN codes?
 MAXSIZE = 4096

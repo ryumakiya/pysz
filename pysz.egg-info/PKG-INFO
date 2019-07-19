@@ -1,0 +1,13 @@
+Metadata-Version: 1.0
+Name: pysz
+Version: 1.0.0
+Summary: pysz: python wrapper of fastsz code originally devoloped by E. Komatsu
+Home-page: https://github.com/ryumakiya/pysz
+Author: Ryu Makiya
+Author-email: ryu.makiya@gmail.com
+License: UNKNOWN
+Description: # pysz
+        This is the python wrpaaer for the calculation of thermal SZ power spectrum.
+        The tSZ Cl code is originally devoloped by Eiichiro Komatsu
+        
+Platform: UNKNOWN

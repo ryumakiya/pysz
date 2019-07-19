@@ -1,0 +1,12 @@
+MANIFEST.in
+setup.cfg
+setup.py
+pysz/__init__.py
+pysz/pysz.py
+pysz.egg-info/PKG-INFO
+pysz.egg-info/SOURCES.txt
+pysz.egg-info/dependency_links.txt
+pysz.egg-info/not-zip-safe
+pysz.egg-info/requires.txt
+pysz.egg-info/top_level.txt
+pysz/source/calc_cl

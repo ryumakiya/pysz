@@ -1,4 +1,4 @@
-/source/*.o
-/source/*.mod
-/source/calc_cl
-/pysz.pyc
+/pysz/source/*.o
+/pysz/source/*.mod
+/pysz/source/calc_cl
+/pysz/pysz.pyc
