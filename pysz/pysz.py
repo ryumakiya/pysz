@@ -54,8 +54,23 @@ class tsz_cl:
         ns = params['ns']
         mnu = params['mnu']
         mass_bias = params['mass_bias']
-        flag_nu = params['flag_nu']
-        flag_tll = params['flag_tll']
+        flag_nu_logic = params['flag_nu']
+        flag_tll_logic = params['flag_tll']
+        if type(flag_nu_logic) != bool:
+            print 'flag_nu must be boolean.'
+            sys.exit()
+        if type(flag_tll_logic) != bool:
+            print 'flag_tll must be boolean.'
+            sys.exit()
+        
+        if flag_nu_logic:
+            flag_nu = 1
+        else:
+            flag_nu = 0
+        if flag_tll_logic:
+            flag_tll = 1
+        else:
+            flag_tll = 0
         
         if 'theta' in params.keys():
             theta = params['theta']
@@ -120,4 +135,6 @@ class tsz_cl:
                 cl_yy,tll,\
                 flag_nu_in,flag_tll_in\
                 )
+
+        self.cosmo.struct_cleanup()
         return cl_yy, tll
