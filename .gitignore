@@ -2,3 +2,6 @@
 /pysz/source/*.mod
 /pysz/source/calc_cl
 /pysz/pysz.pyc
+/build/*
+/dist/*
+pysz.egg-info
