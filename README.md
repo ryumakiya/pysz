@@ -24,3 +24,5 @@ if you can not make it, modify Makefile in this directory
 cd PYSZDIRECTORY
 python setup.py install
 ```
+
+4. see pysz_usage.ipynb for the usage of the code
