@@ -7,9 +7,12 @@ OBJS	= cosmo.o global_var.o linearpk_z.o hunt.o spline.o sigma_z.o chebyshev.o d
 .f90.o:
 	$(FC) $(FFLAGS) -c $< 
 
-default: calc_cl
+default: calc_cl calc_by
 
 calc_cl: $(OBJS) calc_cl.o
+	$(FC) $(FFLAGS) -o $@ $(OBJS) $@.o $(LDFLAGS)
+
+calc_by: $(OBJS) calc_by.o
 	$(FC) $(FFLAGS) -o $@ $(OBJS) $@.o $(LDFLAGS)
 
 clean:
