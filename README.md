@@ -1,9 +1,8 @@
 # pysz
-This code calculates the thermal SZ power spectrum.
-The tSZ Cl calculation is based on the fortran code devoloped by Eiichiro Komatsu:
-https://wwwmpa.mpa-garching.mpg.de/~komatsu/CRL/clusters/szpowerspectrumdks/
+This is the python code for the calculation of the thermal SZ power spectrum.
+The tSZ Cl calculation is based on [the fortran code](https://wwwmpa.mpa-garching.mpg.de/~komatsu/CRL/clusters/szpowerspectrumdks/) devoloped by Eiichiro Komatsu.
 
-Please cite [Komatsu and Seljak 2002:https://arxiv.org/abs/astro-ph/0205468] if you use the code in your paper.
+Please cite [Komatsu and Seljak 2002](https://arxiv.org/abs/astro-ph/0205468) if you use the code in your paper.
 
 # INSTALL
 1. Move to source directory
