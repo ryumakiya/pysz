@@ -86,7 +86,7 @@ CONTAINS
     lnM1=dlog(Mmin); lnM2=dlog(Mmax)
     dlnM = (lnM2-lnM1)/nm
 
-    !$OMP parallel private(z, lnx, dvdz, a1, a2, z, lnx, lnM, j)
+    !$OMP parallel private(dvdz, a1, a2, z, lnx, lnM, j)
     !$OMP do
     do i = 0, nz_in-1
       z = z_arr(i)
@@ -104,6 +104,7 @@ CONTAINS
       dydz_arr(i) = a1*dvdz
     end do
     !$OMP end do
+    !$OMP end parallel
     
   END SUBROUTINE calc_by_dydz
 !===============================================================

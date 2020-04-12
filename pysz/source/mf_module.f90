@@ -68,12 +68,12 @@ CONTAINS
       lnsigma2 = (c2-c1)/dz*(z-dz*iz)+c1 ! ln(sigma^2)
       cder1 = CHEBEV(lnR1,lnR2,cder(:,iz+1),ndim,lnRh)
       cder2 = CHEBEV(lnR1,lnR2,cder(:,iz+2),ndim,lnRh)
-      dlnsigma2dlnRh = (cder2-cder1)/dz*(z-dz*iz)+cder1 ! ln(sigma^2)
+      dlnsigma2dlnRh = (cder2-cder1)/dz*(z-dz*iz)+cder1 ! dln(sigma^2)/dlnRh
     else 
       lnsigma2 = CHEBEV(lnR1,lnR2,c(:,pk_nz),ndim,lnRh)          ! ln(sigma^2)
       dlnsigma2dlnRh = CHEBEV(lnR1,lnR2,cder(:,pk_nz),ndim,lnRh) ! dln(sigma^2)/dlnRh
     end if
-    lnnu=2d0*dlog(deltac)-dble(lnsigma2) ! ln(nu
+    lnnu=2d0*dlog(deltac)-dble(lnsigma2) ! ln(nu)
     dlnnudlnRh=-dble(dlnsigma2dlnRh)     ! dln(nu)/dlnRh
     dndlnRh = (3d0/4d0/pi)*dlnnudlnRh*mf_T08_intp(lnnu,z,500d0/omz)/Rh**3d0
     dndlnMh_500c_T08 = dndlnRh/3d0 ! in units of h^3 Mpc^-3
