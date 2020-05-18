@@ -95,10 +95,10 @@ class tsz_cl:
         flag_nu_logic = params['flag_nu']
         flag_tll_logic = params['flag_tll']
         if type(flag_nu_logic) != bool:
-            print 'flag_nu must be boolean.'
+            print('flag_nu must be boolean.')
             sys.exit()
         if type(flag_tll_logic) != bool:
-            print 'flag_tll must be boolean.'
+            print('flag_tll must be boolean.')
             sys.exit()
         
         if flag_nu_logic:
@@ -186,7 +186,7 @@ class tsz_cl:
         mass_bias = params['mass_bias']
         flag_nu_logic = params['flag_nu']
         if type(flag_nu_logic) != bool:
-            print 'flag_nu must be boolean.'
+            print('flag_nu must be boolean.')
             sys.exit()
         
         if flag_nu_logic:
@@ -269,7 +269,7 @@ class tsz_cl:
         mass_bias = params['mass_bias']
         flag_nu_logic = params['flag_nu']
         if type(flag_nu_logic) != bool:
-            print 'flag_nu must be boolean.'
+            print('flag_nu must be boolean.')
             sys.exit()
         
         if flag_nu_logic:
