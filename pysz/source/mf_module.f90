@@ -23,12 +23,15 @@ CONTAINS
     end if
     lnRh = real(dlog(Rh))
 
-    dz = (z2-0d0)/(pk_nz-1)
-    iz = int((z-1d-5)/dz)
+    iz = 0
+    do while (z >= pk_z_arr(iz) .and. iz <= pk_nz) 
+      iz=iz+1
+    end do
+    iz = iz-1
     if (iz < pk_nz-1) then
       c1 = CHEBEV(lnR1,lnR2,c(:,iz+1),ndim,lnRh)
       c2 = CHEBEV(lnR1,lnR2,c(:,iz+2),ndim,lnRh)
-      lnsigma2 = (c2-c1)/dz*(z-dz*iz)+c1 ! ln(sigma^2)
+      lnsigma2 = (c2-c1)/(pk_z_arr(iz+1)-pk_z_arr(iz))*(z-pk_z_arr(iz))+c1 ! ln(sigma^2)
     else 
       lnsigma2 = CHEBEV(lnR1,lnR2,c(:,pk_nz),ndim,lnRh)          ! ln(sigma^2)
     end if
@@ -45,8 +48,8 @@ CONTAINS
     double precision :: deltac=1.6865d0,mf_500c,dndlnRh,lnnu,dlnnudlnRh
     real :: chebev,lnsigma2,lnRh,dlnsigma2dlnRh
     double precision :: mf_T08_intp
-    double precision :: c1, c2, cder1, cder2, dz
-    integer :: iz
+    double precision :: c1, c2, cder1, cder2, dz, hoge
+    integer :: iz, iz2
     external mf_T08_intp
 
     m500 = dexp(lnM500)
@@ -60,15 +63,18 @@ CONTAINS
     end if
     lnRh = real(dlog(Rh))
 
-    dz = (z2-0d0)/(pk_nz-1)
-    iz = int((z-1d-5)/dz)
+    iz = 0
+    do while (z >= pk_z_arr(iz) .and. iz <= pk_nz) 
+      iz=iz+1
+    end do
+    iz = iz-1
     if (iz < pk_nz-1) then
       c1 = CHEBEV(lnR1,lnR2,c(:,iz+1),ndim,lnRh)
       c2 = CHEBEV(lnR1,lnR2,c(:,iz+2),ndim,lnRh)
-      lnsigma2 = (c2-c1)/dz*(z-dz*iz)+c1 ! ln(sigma^2)
+      lnsigma2 = (c2-c1)/(pk_z_arr(iz+1)-pk_z_arr(iz))*(z-pk_z_arr(iz))+c1
       cder1 = CHEBEV(lnR1,lnR2,cder(:,iz+1),ndim,lnRh)
       cder2 = CHEBEV(lnR1,lnR2,cder(:,iz+2),ndim,lnRh)
-      dlnsigma2dlnRh = (cder2-cder1)/dz*(z-dz*iz)+cder1 ! dln(sigma^2)/dlnRh
+      dlnsigma2dlnRh = (cder2-cder1)/(pk_z_arr(iz+1)-pk_z_arr(iz))*(z-pk_z_arr(iz))+cder1 ! dln(sigma^2)/dlnRh
     else 
       lnsigma2 = CHEBEV(lnR1,lnR2,c(:,pk_nz),ndim,lnRh)          ! ln(sigma^2)
       dlnsigma2dlnRh = CHEBEV(lnR1,lnR2,cder(:,pk_nz),ndim,lnRh) ! dln(sigma^2)/dlnRh

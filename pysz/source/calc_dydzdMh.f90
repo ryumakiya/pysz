@@ -22,10 +22,12 @@ SUBROUTINE calc_dydzdMh(h0_in, obh2_in, och2_in, mnu_in, mass_bias_in,&
   flag_nu = flag_nu_in
 
   ! read in linear P(k,z)
+  allocate(pk_z_arr(0:0))
+  pk_z_arr(:) = z_in
   pk_nk = pk_nk_in
   pk_nz = pk_nz_in
   call open_linearpk(pk_nk,pk_nz,k_arr,pk_arr)
-
+ 
   ! input parameters
   !! cosmological parameters
   h0 = h0_in
@@ -61,6 +63,7 @@ SUBROUTINE calc_dydzdMh(h0_in, obh2_in, och2_in, mnu_in, mass_bias_in,&
   call close_linearpk
   call close_sigma
   call close_ptilde
+  deallocate(pk_z_arr)
   !$OMP barrier
 
 !===============================================================

@@ -9,4 +9,5 @@ MODULE global_var
   integer :: flag_tll = 0 ! 0: not calc, 1: calc
   integer :: pk_nz, pk_nk
   double precision :: pi = 3.14159265359d0
+  double precision, allocatable :: pk_z_arr(:)
 END MODULE global_var

@@ -1,7 +1,8 @@
 #define MAXSIZE 4096
-SUBROUTINE calc_by(h0_in, obh2_in, och2_in, mnu_in, mass_bias_in,&
-                   pk_nk_in, pk_nz_in, k_arr, pk_arr,&
-                   nz_in, z_arr, by_arr, dydz_arr, flag_nu_in)
+SUBROUTINE calc_by(h0_in, obh2_in, och2_in, mnu_in, mass_bias_in, &
+                   pk_nk_in, k_arr, pk_arr, &
+                   nz_in, z_arr, by_arr, dydz_arr, flag_nu_in, &
+                   Mmin_in, Mmax_in)
   !$ USE omp_lib
   use cosmo
   use global_var
@@ -10,21 +11,28 @@ SUBROUTINE calc_by(h0_in, obh2_in, och2_in, mnu_in, mass_bias_in,&
   use angular_distance
   use mod_ptilde
   IMPLICIT none
-  integer, intent(IN) :: pk_nk_in, pk_nz_in, nz_in
+  integer, intent(IN) :: pk_nk_in, nz_in
   double precision, intent(IN) :: h0_in, obh2_in, och2_in, mnu_in
   double precision, intent(IN) :: mass_bias_in
-  double precision, dimension(0:pk_nk_in-1,0:pk_nz_in-1), intent(IN) :: k_arr, pk_arr
+  double precision, dimension(0:pk_nk_in-1,0:nz_in-1), intent(IN) :: k_arr, pk_arr
   double precision, dimension(0:nz_in-1), intent(INOUT) :: z_arr
   double precision, dimension(0:nz_in-1), intent(INOUT) :: by_arr
   double precision, dimension(0:nz_in-1), intent(INOUT) :: dydz_arr
   integer, intent(IN) :: flag_nu_in
+  double precision, intent(IN) :: Mmin_in, Mmax_in
 
   ! flag for neutrino prescription
   flag_nu = flag_nu_in
 
+  ! integration range
+  Mmin = Mmin_in
+  Mmax = Mmax_in
+
   ! read in linear P(k,z)
+  allocate(pk_z_arr(0:nz_in-1))
+  pk_z_arr = z_arr
   pk_nk = pk_nk_in
-  pk_nz = pk_nz_in
+  pk_nz = nz_in
   call open_linearpk(pk_nk,pk_nz,k_arr,pk_arr)
 
   ! input parameters
@@ -62,6 +70,7 @@ SUBROUTINE calc_by(h0_in, obh2_in, och2_in, mnu_in, mass_bias_in,&
   call close_linearpk
   call close_sigma
   call close_ptilde
+  deallocate(pk_z_arr)
   !$OMP barrier
 
 !===============================================================

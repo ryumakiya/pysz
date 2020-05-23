@@ -1,7 +1,8 @@
 #define MAXSIZE 4096
 SUBROUTINE calc_cl(h0_in, obh2_in, och2_in, mnu_in, mass_bias_in,&
-                   pk_nk_in, pk_nz_in, k_arr, pk_arr,&
-                   nl_in, ell_arr, cl_yy, tll, flag_nu_in, flag_tll_in)
+                   pk_nk_in, pk_nz_in, k_arr, pk_arr, pk_z_arr_in,&
+                   nl_in, ell_arr, cl_yy, tll, flag_nu_in, flag_tll_in,&
+                   z1_in,z2_in,Mmin_in,Mmax_in)
   !$ USE omp_lib
   use cosmo
   use global_var
@@ -14,12 +15,21 @@ SUBROUTINE calc_cl(h0_in, obh2_in, och2_in, mnu_in, mass_bias_in,&
   double precision, intent(IN) :: h0_in, obh2_in, och2_in, mnu_in
   double precision, intent(IN) :: mass_bias_in
   double precision, dimension(0:pk_nk_in-1,0:pk_nz_in-1), intent(IN) :: k_arr, pk_arr
+  double precision, dimension(0:pk_nz_in-1), intent(IN) :: pk_z_arr_in
   double precision, dimension(0:nl_in-1), intent(INOUT) :: ell_arr
   double precision, dimension(0:nl_in-1,0:1), intent(INOUT) :: cl_yy
   double precision, dimension(0:nl_in-1,0:nl_in-1), intent(INOUT) :: tll
   integer, intent(IN) :: flag_nu_in, flag_tll_in
+  double precision, intent(IN) :: z1_in, z2_in, Mmin_in, Mmax_in
 
+  ! number of multipole bin
   nl = nl_in
+
+  ! integraton range
+  z1 = z1_in
+  z2 = z2_in
+  Mmin = Mmin_in
+  Mmax = Mmax_in
 
   ! flag for neutrino prescription
   flag_nu = flag_nu_in
@@ -28,6 +38,8 @@ SUBROUTINE calc_cl(h0_in, obh2_in, och2_in, mnu_in, mass_bias_in,&
   flag_tll = flag_tll_in
 
   ! read in linear P(k,z)
+  allocate(pk_z_arr(0:pk_nz_in-1))
+  pk_z_arr = pk_z_arr_in
   pk_nk = pk_nk_in
   pk_nz = pk_nz_in
   call open_linearpk(pk_nk,pk_nz,k_arr,pk_arr)
@@ -67,6 +79,7 @@ SUBROUTINE calc_cl(h0_in, obh2_in, och2_in, mnu_in, mass_bias_in,&
   call close_linearpk
   call close_sigma
   call close_ptilde
+  deallocate(pk_z_arr)
   !$OMP barrier
 
 !===============================================================
@@ -206,15 +219,17 @@ CONTAINS
     double precision :: by, lnM1, lnM2, lnM, dlnM
     double precision :: integrand_by
     double precision :: linear_pk
-    double precision :: pk1, pk2, pk_z, dz
+    double precision :: pk1, pk2, pk_z
     integer :: il, iz
     external linear_pk, integrand_by
 
     intg_2h = 0d0
     z = dexp(lnx)-1d0
-    dz = (z2-0d0)/(pk_nz-1)
-    iz = int((z-1d-5)/dz)
-
+    iz = 0
+    do while (z >= pk_z_arr(iz) .and. iz <= pk_nz) 
+      iz=iz+1
+    end do
+    iz = iz-1
     do il = 1, nl
       ell = ell_arr(il)
 
@@ -227,7 +242,7 @@ CONTAINS
       if (iz < pk_nz-1) then
         pk1 = linear_pk(ell/chi,iz+1)
         pk2 = linear_pk(ell/chi,iz+2)
-        pk_z = (pk2-pk1)/dz*(z-dz*iz)+pk1
+        pk_z = (pk2-pk1)/(pk_z_arr(iz+1)-pk_z_arr(iz))*(z-pk_z_arr(iz))+pk1
       else
         pk_z = linear_pk(ell/chi,pk_nz) 
       end if

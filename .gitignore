@@ -1,6 +1,9 @@
 /pysz/source/*.o
 /pysz/source/*.mod
 /pysz/source/calc_cl
+/pysz/source/calc_by
+/pysz/source/calc_dydzdMh
+/pysz/source/.*.swp
 /pysz/pysz.pyc
 /build/*
 /dist/*
