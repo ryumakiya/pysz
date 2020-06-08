@@ -11,9 +11,9 @@ default: calc_ptilde
 default: calc_ptilde
 
 calc_ptilde: $(OBJS) calc_ptilde.o
-	$(FC) $(FFLAGS) -o $@ $(OBJS) $@.o
+	$(FC) $(FFLAGS) -o $@.exe $(OBJS) $@.o
 
 clean:
-	-rm -f *.o *.mod *~
+	-rm -f *.o *.mod *.exe
 tidy: clean
 	-rm -f calc_ptilde

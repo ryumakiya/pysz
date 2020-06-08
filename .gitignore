@@ -9,3 +9,7 @@
 /dist/*
 pysz.egg-info
 /.ipynb_checkpoints
+/pysz/aux_codes/calc_ptilde/*.o
+/pysz/aux_codes/calc_ptilde/*.txt
+/pysz/aux_codes/calc_ptilde/*.exe
+
