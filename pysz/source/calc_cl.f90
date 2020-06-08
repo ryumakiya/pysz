@@ -1,6 +1,7 @@
 #define MAXSIZE 4096
 SUBROUTINE calc_cl(h0_in, obh2_in, och2_in, mnu_in, mass_bias_in,&
                    pk_nk_in, pk_nz_in, k_arr, pk_arr, pk_z_arr_in,&
+                   nell_ptilde_in, ell_ptilde_arr,ptilde_arr,& 
                    nl_in, ell_arr, cl_yy, tll, flag_nu_in, flag_tll_in,&
                    z1_in,z2_in,Mmin_in,Mmax_in)
   !$ USE omp_lib
@@ -9,13 +10,14 @@ SUBROUTINE calc_cl(h0_in, obh2_in, och2_in, mnu_in, mass_bias_in,&
   use linearpk_z
   use sigma_z
   use angular_distance
-  use mod_ptilde
+  use ptilde_module
   IMPLICIT none
-  integer, intent(IN) :: pk_nk_in, pk_nz_in, nl_in
+  integer, intent(IN) :: pk_nk_in, pk_nz_in, nl_in, nell_ptilde_in
   double precision, intent(IN) :: h0_in, obh2_in, och2_in, mnu_in
   double precision, intent(IN) :: mass_bias_in
   double precision, dimension(0:pk_nk_in-1,0:pk_nz_in-1), intent(IN) :: k_arr, pk_arr
   double precision, dimension(0:pk_nz_in-1), intent(IN) :: pk_z_arr_in
+  double precision, dimension(0:nell_ptilde_in-1), intent(IN) :: ell_ptilde_arr, ptilde_arr
   double precision, dimension(0:nl_in-1), intent(INOUT) :: ell_arr
   double precision, dimension(0:nl_in-1,0:1), intent(INOUT) :: cl_yy
   double precision, dimension(0:nl_in-1,0:nl_in-1), intent(INOUT) :: tll
@@ -44,6 +46,9 @@ SUBROUTINE calc_cl(h0_in, obh2_in, och2_in, mnu_in, mass_bias_in,&
   pk_nz = pk_nz_in
   call open_linearpk(pk_nk,pk_nz,k_arr,pk_arr)
 
+  ! read ptilde
+  call open_ptilde(nell_ptilde_in,ell_ptilde_arr,ptilde_arr)
+
   ! input parameters
   !! cosmological parameters
   h0 = h0_in
@@ -61,10 +66,6 @@ SUBROUTINE calc_cl(h0_in, obh2_in, och2_in, mnu_in, mass_bias_in,&
   alp_p = 0.12d0
   beta = 0.d0
 
-  ! preface
-  !! ptilde
-  call setup_ptilde
-
   !! fit sigma^2(R) to Chebyshev polynomials
   call compute_sigma2
 
@@ -77,8 +78,8 @@ SUBROUTINE calc_cl(h0_in, obh2_in, och2_in, mnu_in, mass_bias_in,&
   !$OMP barrier
 
   call close_linearpk
-  call close_sigma
   call close_ptilde
+  call close_sigma
   deallocate(pk_z_arr)
   !$OMP barrier
 

@@ -14,9 +14,6 @@ sys.path.append(LIBDIR)
 
 class tsz_cl:
     def __init__(self):
-        # print 'Class for tSZ Cl'
-        # self.ptilde = np.loadtxt(LIBDIR+'/aux_files/ptilde.txt')
-
         self.fort_lib_cl = cdll.LoadLibrary(LIBDIR+"/source/calc_cl")
         self.fort_lib_cl.calc_cl_.argtypes = [
                                     POINTER(c_double), #h0
@@ -29,6 +26,9 @@ class tsz_cl:
                                     np.ctypeslib.ndpointer(dtype=np.double), #karr
                                     np.ctypeslib.ndpointer(dtype=np.double), #pkarr
                                     np.ctypeslib.ndpointer(dtype=np.double), #pk_z_arr
+                                    POINTER(c_int64), #n_ell_ptilde
+                                    np.ctypeslib.ndpointer(dtype=np.double), #ell_ptilde
+                                    np.ctypeslib.ndpointer(dtype=np.double), #ptilde_arr
                                     POINTER(c_int64), #nl
                                     np.ctypeslib.ndpointer(dtype=np.double), #ell
                                     np.ctypeslib.ndpointer(dtype=np.double), #yy
@@ -52,6 +52,9 @@ class tsz_cl:
                                     POINTER(c_int64), #pk_nk
                                     np.ctypeslib.ndpointer(dtype=np.double), #karr
                                     np.ctypeslib.ndpointer(dtype=np.double), #pkarr
+                                    POINTER(c_int64), #n_ell_ptilde
+                                    np.ctypeslib.ndpointer(dtype=np.double), #ell_ptilde
+                                    np.ctypeslib.ndpointer(dtype=np.double), #ptilde_arr
                                     POINTER(c_int64), #nz
                                     np.ctypeslib.ndpointer(dtype=np.double), #z_arr
                                     np.ctypeslib.ndpointer(dtype=np.double), #by_arr
@@ -73,6 +76,9 @@ class tsz_cl:
                                     POINTER(c_int64), #pk_nz
                                     np.ctypeslib.ndpointer(dtype=np.double), #karr
                                     np.ctypeslib.ndpointer(dtype=np.double), #pkarr
+                                    POINTER(c_int64), #n_ell_ptilde
+                                    np.ctypeslib.ndpointer(dtype=np.double), #ell_ptilde
+                                    np.ctypeslib.ndpointer(dtype=np.double), #ptilde_arr
                                     POINTER(c_double), # z
                                     POINTER(c_double), # Mh
                                     POINTER(c_double), # dydzdMh
@@ -91,6 +97,10 @@ class tsz_cl:
         self.nz_pk = int((self.zmax-self.zmin)/self.dz)+1
         self.Mmin = 1e11
         self.Mmax = 5e15
+        self.ptilde_in = np.loadtxt(LIBDIR+'/data/ptilde.txt')
+        self.ell_ptilde = np.array(self.ptilde_in[:,0])
+        self.ptilde_arr = np.array(self.ptilde_in[:,1])
+        self.n_ptilde = len(self.ell_ptilde)
 
         # Class
         self.cosmo = Class()
@@ -189,6 +199,7 @@ class tsz_cl:
                 h0_in, obh2_in, och2_in, mnu_in,\
                 mass_bias_in, nk, nz,\
                 np.array(kh),np.array(pk),np.array(pk_zarr),\
+                byref(c_int64(self.n_ptilde)), self.ell_ptilde, self.ptilde_arr,\
                 nl,np.array(ell_arr),\
                 cl_yy,tll,\
                 flag_nu_in,flag_tll_in,\
@@ -277,6 +288,7 @@ class tsz_cl:
                 h0_in, obh2_in, och2_in, mnu_in, \
                 mass_bias_in, nk, \
                 np.array(kh),np.array(pk), \
+                byref(c_int64(self.n_ptilde)), self.ell_ptilde, self.ptilde_arr,\
                 nz,np.array(z_arr), \
                 by_arr,dydz_arr, \
                 flag_nu_in, \
@@ -357,6 +369,7 @@ class tsz_cl:
                 h0_in, obh2_in, och2_in, mnu_in, \
                 mass_bias_in, nk, nz, \
                 np.array(kh),np.array(pk), \
+                byref(c_int64(self.n_ptilde)), self.ell_ptilde, self.ptilde_arr,\
                 z_in,Mh_in, \
                 dydzdMh, \
                 flag_nu_in \

@@ -1,6 +1,7 @@
 #define MAXSIZE 4096
 SUBROUTINE calc_dydzdMh(h0_in, obh2_in, och2_in, mnu_in, mass_bias_in,&
-                   pk_nk_in, pk_nz_in, k_arr, pk_arr,&
+                   pk_nk_in, pk_nz_in, k_arr, pk_arr, &
+                   nell_ptilde_in, ell_ptilde_arr, ptilde_arr, & 
                    z_in, Mh_in, dydzdMh, flag_nu_in)
   !$ USE omp_lib
   use cosmo
@@ -8,12 +9,13 @@ SUBROUTINE calc_dydzdMh(h0_in, obh2_in, och2_in, mnu_in, mass_bias_in,&
   use linearpk_z
   use sigma_z
   use angular_distance
-  use mod_ptilde
+  use ptilde_module
   IMPLICIT none
-  integer, intent(IN) :: pk_nk_in, pk_nz_in
+  integer, intent(IN) :: pk_nk_in, pk_nz_in, nell_ptilde_in
   double precision, intent(IN) :: h0_in, obh2_in, och2_in, mnu_in
   double precision, intent(IN) :: mass_bias_in
   double precision, dimension(0:pk_nk_in-1,0:pk_nz_in-1), intent(IN) :: k_arr, pk_arr
+  double precision, dimension(0:nell_ptilde_in-1), intent(IN) :: ell_ptilde_arr, ptilde_arr
   double precision, intent(IN) :: z_in, Mh_in
   double precision, intent(INOUT) :: dydzdMh
   integer, intent(IN) :: flag_nu_in
@@ -27,6 +29,9 @@ SUBROUTINE calc_dydzdMh(h0_in, obh2_in, och2_in, mnu_in, mass_bias_in,&
   pk_nk = pk_nk_in
   pk_nz = pk_nz_in
   call open_linearpk(pk_nk,pk_nz,k_arr,pk_arr)
+
+  ! read ptilde
+  call open_ptilde(nell_ptilde_in,ell_ptilde_arr,ptilde_arr)
  
   ! input parameters
   !! cosmological parameters
@@ -46,9 +51,6 @@ SUBROUTINE calc_dydzdMh(h0_in, obh2_in, och2_in, mnu_in, mass_bias_in,&
   beta = 0.d0
 
   ! preface
-  !! ptilde
-  call setup_ptilde
-
   !! fit sigma^2(R) to Chebyshev polynomials
   call compute_sigma2
 

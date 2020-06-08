@@ -3,7 +3,7 @@
     USE global_var
     USE angular_distance
     USE cosmo
-    USE mod_ptilde
+    USE ptilde_module
     IMPLICIT none
     double precision, intent(IN) :: lnx, lnM, ell
     double precision :: m500, r500, l500
