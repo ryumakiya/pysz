@@ -12,6 +12,11 @@ I have confirmed that the outputs of pysz and class_sz within the numerical unce
 
 Any questions and requests are welcome.
 
+# REQUIREMENTS
+The code requires the python modules of [numpy](https://numpy.org/) and [classy](https://lesgourg.github.io/class_public/class.html).
+You should manually install classy.
+
+
 # INSTALL
 1. Move to source directory
 
@@ -20,12 +25,12 @@ cd pysz/pysz/source
 ```
 
 2. Compile fortran codes
-
+Please specify the fortran compilar you use in the Makefile.
+Then,
 ```
 make clean && make
 ```
-
-if you can not make it, modify Makefile in this directory
+All required fortran modules are at the same directory.
 
 
 3. then go back to top directory of pysz and install python modules
@@ -35,4 +40,12 @@ cd PYSZDIRECTORY
 python setup.py install
 ```
 
-4. see pysz_usage.ipynb for the usage of the code
+4. Check the instlattion
+Run the python interpreter and type
+```
+from pysz import pysz
+```
+if it doesn't show any errors, installtion is succesfully completed.
+
+# Usage
+See pysz_usage.ipynb for the usage of the code.
