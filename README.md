@@ -1,6 +1,10 @@
 # pysz
 
-This is the python code for the calculation of the thermal SZ anguler power spectrum.
+This is the python code for the calculation of:
+- the thermal SZ anguler power spectrum (used in [Makiya et al. 2018](https://arxiv.org/abs/1804.05008) and [Makiya et al. 2020](https://arxiv.org/abs/1907.07870))
+- Compton-Y weighted halo bias b_y (used in Chiang et al. 2020)
+- redshift dervative of the Compton-Y, dy/dz (used in Chiang et al. 2020)
+
 The tSZ power spectrum calculation is based on the fortran code [szfast](https://wwwmpa.mpa-garching.mpg.de/~komatsu/CRL/clusters/szpowerspectrumdks/) devoloped by Eiichiro Komatsu,
 but there are several important updates e.g., treatment of neutrino mass in the calculation of mass function, mass-concentration relation, etc.
 Please see [Makiya et al. 2018](https://arxiv.org/abs/1804.05008) and [Makiya et al. 2020](https://arxiv.org/abs/1907.07870) for the details of the updates.
