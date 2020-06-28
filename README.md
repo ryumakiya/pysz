@@ -2,7 +2,7 @@
 
 This is the python code for the calculation of:
 - the thermal SZ anguler power spectrum (used in [Makiya et al. 2018](https://arxiv.org/abs/1804.05008) and [Makiya et al. 2020](https://arxiv.org/abs/1907.07870))
-- Compton-Y weighted halo bias b_y (used in Chiang et al. 2020)
+- Compton-Y weighted halo bias $b_y$ (used in Chiang et al. 2020)
 - redshift dervative of the Compton-Y, dy/dz (used in Chiang et al. 2020)
 
 The tSZ power spectrum calculation is based on the fortran code [szfast](https://wwwmpa.mpa-garching.mpg.de/~komatsu/CRL/clusters/szpowerspectrumdks/) devoloped by Eiichiro Komatsu,
@@ -17,8 +17,8 @@ I have confirmed that the outputs of pysz and class_sz within the numerical unce
 
 Any questions and requests are welcome.
 
-# Notes
-- You can use [this script](https://github.com/ryumakiya/pysz/blob/master/plot_by.ipynb) to reproduce the Figure 10 of Chiang et al. (2020)
+**Notes**
+- You can use [this script](https://github.com/ryumakiya/pysz/blob/master/plot_by.ipynb) to reproduce the plot of redshift vs Compton-Y weighted halo bias $b_y$ (Figure 10 of Chiang et al. 2020)
 
 # INSTALL
 0. The code requires the python modules of [numpy](https://numpy.org/) and [classy](https://lesgourg.github.io/class_public/class.html).
